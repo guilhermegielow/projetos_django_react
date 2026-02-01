@@ -34,6 +34,9 @@ export function AtividadesPage() {
   const [open, setOpen] = useState(false);
   const [editando, setEditando] = useState<Atividade | undefined>();
 
+  const formatarDataHora = (data: string) =>
+  `${data.substring(8, 10)}/${data.substring(5, 7)}/${data.substring(0, 4)} ${data.substring(11, 16)}`;
+
   const carregar = async () => {
     setAtividades(await listarAtividades());
     setProjetos(await listarProjetos());
@@ -88,7 +91,7 @@ export function AtividadesPage() {
             <TableRow key={a.id}>
               <TableCell>{a.descricao}</TableCell>
               <TableCell>
-                {new Date(a.data).toLocaleString()}
+                {formatarDataHora(a.data)}
               </TableCell>
               <TableCell>{a.projeto_nome}</TableCell>
 

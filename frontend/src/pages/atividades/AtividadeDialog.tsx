@@ -15,47 +15,54 @@ import { useEffect, useState } from "react";
 import type { Projeto } from "../../types/Projeto";
 import type { Atividade } from "../../types/Atividade";
 
+import { listarProjetos } from "../../services/projetos.service";
+
 interface Props {
   open: boolean;
   onClose: () => void;
-  onSave: (data: any) => void;
-  projetos: Projeto[];
+  onSave: (data: Atividade) => Promise<void>;
   atividade?: Atividade;
 }
 
-const emptyForm = {
+const emptyForm: Atividade = {
+  id: undefined,
   descricao: "",
   data: "",
-  projeto_id: "",
+  projeto_id: null,
 };
 
 export function AtividadeDialog({
   open,
   onClose,
   onSave,
-  projetos,
   atividade
 }: Props) {
-  const [form, setForm] = useState<typeof emptyForm>(emptyForm);
+  const [form, setForm] = useState<Atividade>(emptyForm);
+  const [projetos, setProjetos] = useState<Projeto[]>([]);
 
-  /**
-   * Sincroniza formulário (novo / editar)
-   */
   useEffect(() => {
+    if (!open) return;
+
+    // 🔥 sempre atualiza projetos ao abrir
+    listarProjetos()
+      .then(setProjetos)
+      .catch(console.error);
+
     if (atividade) {
       setForm({
+        id: atividade.id,
         descricao: atividade.descricao ?? "",
         data: atividade.data
-          ? new Date(atividade.data).toISOString().slice(0, 16)
-          : "",
-        projeto_id: atividade.projeto_id ?? "",
+        ? atividade.data.slice(0, 16)
+        : "",
+        projeto_id: atividade.projeto_id ?? null,
       });
     } else {
       setForm(emptyForm);
     }
-  }, [atividade, open]);
+  }, [open, atividade]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.descricao.trim()) {
       alert("Preencha a descrição");
       return;
@@ -71,18 +78,12 @@ export function AtividadeDialog({
       return;
     }
 
-    // ✅ Conversão SEGURA
-    const date = new Date(form.data);
-    if (isNaN(date.getTime())) {
-      alert("Data inválida");
-      return;
-    }
-
-    onSave({
-      descricao: form.descricao,
-      data: date.toISOString(),
-      projeto_id: form.projeto_id,
+    await onSave({
+    ...form,
+    data: `${form.data}:00`,
     });
+
+    onClose();
   };
 
   return (
@@ -121,10 +122,13 @@ export function AtividadeDialog({
         <FormControl fullWidth required>
           <InputLabel>Projeto</InputLabel>
           <Select
-            value={form.projeto_id}
+            value={form.projeto_id ?? ""}
             label="Projeto"
             onChange={e =>
-              setForm({ ...form, projeto_id: e.target.value })
+              setForm({
+                ...form,
+                projeto_id: Number(e.target.value),
+              })
             }
           >
             {projetos.map(p => (

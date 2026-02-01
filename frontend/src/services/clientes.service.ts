@@ -2,7 +2,7 @@ import { apiFetch } from "./api";
 import type { Cliente } from "../types/Cliente";
 
 export function listarClientes(): Promise<Cliente[]> {
-  return apiFetch<Cliente[]>("/clientes");
+  return apiFetch<Cliente[]>("/clientes/");
 }
 
 export function criarCliente(cliente: Partial<Cliente>) {

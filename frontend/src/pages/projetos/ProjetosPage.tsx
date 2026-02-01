@@ -60,8 +60,8 @@ export function ProjetosPage() {
 
     console.log("PAYLOAD:", payload);
 
-    if (!payload.cliente_id || !payload.status_projeto) {
-      alert("Cliente e Status são obrigatórios");
+    if (!payload.cliente_id) {
+      alert("Cliente é obrigatório");
       return;
     }
 

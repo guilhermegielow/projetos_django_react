@@ -1,0 +1,41 @@
+# ======================
+# Python / Django
+# ======================
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtualenv
+venv/
+.env/
+.env.*
+.venv/
+
+# Django
+db.sqlite3
+media/
+staticfiles/
+static/
+
+# Migrations cache
+**/migrations/*.pyc
+
+# Logs
+*.log
+
+# PyCharm / VSCode
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test / coverage
+.coverage
+htmlcov/
+.pytest_cache/
+
+# dotenv
+.env.local
+.env.production

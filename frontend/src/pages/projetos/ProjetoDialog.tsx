@@ -16,42 +16,57 @@ import type { Cliente } from "../../types/Cliente";
 import type { StatusProjeto } from "../../types/StatusProjeto";
 import type { Projeto } from "../../types/Projeto";
 
+import { listarClientes } from "../../services/clientes.service";
+import { listarStatusProjeto } from "../../services/statusProjeto.service";
+
 interface Props {
   open: boolean;
   onClose: () => void;
-  onSave: (data: any) => void;
-  clientes: Cliente[];
-  status: StatusProjeto[];
+  onSave: (data: Projeto) => Promise<void>;
   projeto?: Projeto;
 }
 
-const emptyForm = {
+const emptyForm: Projeto = {
+  id: undefined,
   nome: "",
   descricao: "",
-  cliente_id: null as number | null,
-  status_projeto: null as number | null,
+  cliente_id: null,
+  status_projeto: null,
 };
 
-export function ProjetoDialog({
-  open,
-  onClose,
-  onSave,
-  clientes,
-  status,
-  projeto
-}: Props) {
-  const [form, setForm] = useState(emptyForm);
+export function ProjetoDialog({ open, onClose, onSave, projeto }: Props) {
+  const [form, setForm] = useState<Projeto>(emptyForm);
+  const [clientes, setClientes] = useState<Cliente[]>([]);
+  const [status, setStatus] = useState<StatusProjeto[]>([]);
 
   useEffect(() => {
-    if (open) {
-      setForm({
-        nome: projeto?.nome ?? "",
-        descricao: projeto?.descricao ?? "",
-        cliente_id: projeto?.cliente_id ?? null,
-        status_projeto: projeto?.status_projeto ?? null,
-      });
-    }
+    if (!open) return;
+
+    // 🔥 sempre atualiza listas ao abrir
+    Promise.all([
+      listarClientes(),
+      listarStatusProjeto()
+    ]).then(([clientesData, statusData]) => {
+      setClientes(clientesData);
+      setStatus(statusData);
+    });
+
+    setForm({
+      id: projeto?.id,
+      nome: projeto?.nome ?? "",
+      descricao: projeto?.descricao ?? "",
+      cliente_id: projeto?.cliente_id ?? null,
+      status_projeto: projeto?.status_projeto ?? null,
+    });
   }, [open, projeto]);
+
+  const handleSave = async () => {
+    if (!form.nome.trim()) return;
+    if (!form.cliente_id) return;
+
+    await onSave(form);
+    onClose();
+  };
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth>
@@ -59,40 +74,34 @@ export function ProjetoDialog({
         {projeto ? "Editar Projeto" : "Novo Projeto"}
       </DialogTitle>
 
-      <DialogContent
-        sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}
-      >
+      <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
         <TextField
           label="Nome"
           value={form.nome}
+          required
           onChange={e => setForm({ ...form, nome: e.target.value })}
-          fullWidth
         />
 
         <TextField
           label="Descrição"
           value={form.descricao}
-          onChange={e => setForm({ ...form, descricao: e.target.value })}
-          fullWidth
           multiline
           rows={3}
+          onChange={e => setForm({ ...form, descricao: e.target.value })}
         />
 
-        <FormControl fullWidth>
+        <FormControl fullWidth required>
           <InputLabel>Cliente</InputLabel>
           <Select
             value={form.cliente_id ?? ""}
             label="Cliente"
             onChange={e =>
-              setForm({
-                ...form,
-                cliente_id: Number(e.target.value),
-              })
+              setForm({ ...form, cliente_id: Number(e.target.value) })
             }
           >
             {clientes.map(c => (
               <MenuItem key={c.id} value={c.id}>
-                {c.nome} - {c.email}
+                {c.nome} — {c.email}
               </MenuItem>
             ))}
           </Select>
@@ -106,10 +115,15 @@ export function ProjetoDialog({
             onChange={e =>
               setForm({
                 ...form,
-                status_projeto: Number(e.target.value),
+                status_projeto: e.target.value
+                  ? Number(e.target.value)
+                  : null
               })
             }
           >
+            <MenuItem value="">
+              <em>Sem status</em>
+            </MenuItem>
             {status.map(s => (
               <MenuItem key={s.id} value={s.id}>
                 {s.nome}
@@ -121,8 +135,7 @@ export function ProjetoDialog({
 
       <DialogActions>
         <Button onClick={onClose}>Cancelar</Button>
-        <Button variant="contained" onClick={() => onSave(form)}>
-        {console.log("FORM NO DIALOG:", form)}
+        <Button variant="contained" onClick={handleSave}>
           Salvar
         </Button>
       </DialogActions>

@@ -2,9 +2,12 @@ from django.db import models
 
 class ClienteModel(models.Model):
     nome = models.CharField(max_length=255)
-    email = models.EmailField(unique=True)
+    email = models.EmailField(unique=True, error_messages={
+            "unique": "Já existe um cliente cadastrado com este e-mail."})
     telefone = models.CharField(max_length=20)
-    cnpj = models.CharField(unique=True, max_length=20)
+    cnpj = models.CharField(unique=True, max_length=20, error_messages={
+            "unique": "Já existe um cliente cadastrado com este CNPJ."
+        })
 
     class Meta:
         db_table = "clientes"

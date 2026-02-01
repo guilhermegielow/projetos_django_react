@@ -61,14 +61,19 @@ export function ClienteDialog({ open, onClose, onSave, cliente }: Props) {
     try {
       await onSave(payload);
       onClose(); // fecha se sucesso
-    } catch (data: any) {
-      // 'data' aqui deve ser o objeto do serializer { cnpj: [...], email: [...] }
+    } catch (err: any) {
+      const apiErrors = err?.data ?? {};
+
       const formattedErrors: Record<string, string[]> = {};
-      Object.keys(data).forEach(key => {
-        formattedErrors[key] = Array.isArray(data[key]) ? data[key] : [String(data[key])];
+      Object.keys(apiErrors).forEach(key => {
+        formattedErrors[key] = Array.isArray(apiErrors[key])
+          ? apiErrors[key]
+          : [String(apiErrors[key])];
       });
+
       setBackendErrors(formattedErrors);
-    }
+}
+
   };
 
   const getHelperText = (field: keyof Cliente, localError: string) => {
